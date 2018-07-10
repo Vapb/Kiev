@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Map</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script src="jscoord-1.1.1.js"></script>
+    <script>
+      var map;
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: -8.0421584, lng: -35.008676},
+          zoom: 12
+        });
+        
+        wsSendMessage()
+      }
+      
+		var webSocket = new WebSocket("ws://localhost:8080/projetoOnibus/websocketendpoint");
+		var pins = {};
+		webSocket.onopen = function(message){ wsOpen(message);};
+		webSocket.onmessage = function(message){ wsGetMessage(message);};
+		webSocket.onclose = function(message){ wsClose(message);};
+		webSocket.onerror = function(message){ wsError(message);};
+		function wsOpen(message){
+			console.log("Connected ... \n");
+		}
+		function wsSendMessage(){
+			webSocket.send("");
+		}
+		function wsCloseConnection(){
+			webSocket.close();
+		}
+		function wsGetMessage(message){
+			// marker.setPosition(latlng)
+			console.log(message.data);
+			var item = JSON.parse(message.data);
+			var utm1 = new UTMRef(item.cody, item.codx, "L", 25);
+			var ll3 = utm1.toLatLng();
+			var onibus = {lat: ll3.lat, lng: ll3.lng};
+			console.log(onibus)
+			var busca = pins[item.unidade];
+			if(!busca){
+				pins[item.unidade].setPosition(latlng)
+			}else {
+				pins[item.unidade] = new google.maps.Marker({position: onibus, map: map})
+			}
+			//pins.push({
+			//	info: item,
+			//	pin: new google.maps.Marker({position: onibus, map: map})
+			//});
+			// pins.map
+			//var marker = new google.maps.Marker({position: onibus, map: map});
+			//pins.push({
+			//	pin: new google.maps.Marker({position: item.codx, map: item.cody}),
+			//	infos: item
+			//});
+		}
+		function wsClose(message){
+			console.log("Disconnect ... \n");
+		}
+
+		function wserror(message){
+			console.log("Error ... \n");
+		}
+      
+      
+      
+      
+      
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA19kDjLjRhABuGt-xeBRtoAZ2qEXU3FWo&callback=initMap"
+    async defer></script>
+  </body>
+</html>
